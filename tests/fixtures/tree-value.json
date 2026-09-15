@@ -1,0 +1,13 @@
+{
+  "format": "eloquage-score",
+  "version": 1,
+  "type": "tree",
+  "features": ["age", "income"],
+  "output": "value",
+  "root": {
+    "feature": "age",
+    "threshold": 18.0,
+    "left": {"value": 0.2},
+    "right": {"value": 0.8}
+  }
+}

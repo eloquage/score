@@ -1,0 +1,9 @@
+{
+  "format": "eloquage-score",
+  "version": 1,
+  "type": "linear",
+  "features": ["x"],
+  "output": "value",
+  "weights": [true],
+  "bias": 0.0
+}

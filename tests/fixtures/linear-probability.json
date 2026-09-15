@@ -1,0 +1,10 @@
+{
+  "format": "eloquage-score",
+  "version": 1,
+  "type": "linear",
+  "features": ["x1", "x2"],
+  "output": "binary_probability",
+  "weights": [1.0, -1.0],
+  "bias": 0.0,
+  "activation": "sigmoid"
+}

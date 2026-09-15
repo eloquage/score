@@ -1,57 +1,123 @@
-# In-request ML scoring for PHP: load exported linear/tree models and run fast predictions for ranking, fraud, and pricing.
+# eloquage/score
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/eloquage/score.svg?style=flat-square)](https://packagist.org/packages/eloquage/score)
-[![Tests](https://github.com/spatie/package-skeleton-php/actions/workflows/run-tests-pest.yml/badge.svg)](https://github.com/eloquage/score/actions/workflows/run-tests.yml)
-[![Total Downloads](https://img.shields.io/packagist/dt/eloquage/score.svg?style=flat-square)](https://packagist.org/packages/eloquage/score)
-
-This is where your description should go. Try and limit it to a paragraph or two. Consider adding a small example.
-
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/score.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/score)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+Local, inference-only scoring for small exported linear models and bounded
+binary trees/forests. The package is framework-agnostic and runs from pure
+PHP without Python, ONNX, pickle, HTTP, or a model runtime.
 
 ## Installation
-
-You can install the package via composer:
 
 ```bash
 composer require eloquage/score
 ```
 
+## The owned JSON contract
+
+`Score::load()` accepts one local JSON file in the versioned
+`eloquage-score` envelope. The package owns this schema; scikit-learn,
+XGBoost, pickle, and ONNX documents are not runtime inputs.
+
+Every document contains:
+
+```json
+{
+  "format": "eloquage-score",
+  "version": 1,
+  "type": "linear",
+  "features": ["age", "income"],
+  "output": "value",
+  "weights": [0.04, 0.002],
+  "bias": -2.0,
+  "activation": "identity"
+}
+```
+
+The supported model types are `linear`, `tree`, and `forest`. Feature names
+are ordered and unique. Linear models are single-output and use a list of
+finite `weights`, a finite `bias`, and either `identity` or `sigmoid`
+activation. `sigmoid` is valid only with `output: "binary_probability"`.
+Trees use named binary threshold splits, route equality to the left child,
+allow at most eight decisions on a path, and use finite leaf values. Forests
+contain one to 32 trees and use `aggregation: "mean"`.
+
 ## Usage
 
 ```php
-$skeleton = new Eloquage\Score();
-echo $skeleton->echoPhrase('Hello, Eloquage!');
+use Eloquage\Score\Score;
+
+$model = Score::load(__DIR__.'/model.json');
+
+// Ordered vectors follow the declaration in `features`.
+$value = $model->predict([42.0, 80000.0]);
+
+// Named maps are normalized to that same declaration order.
+$sameValue = $model->predict([
+    'income' => 80000.0,
+    'age' => 42.0,
+]);
+```
+
+Inputs must contain exactly the declared features, either as a contiguous
+ordered list or as a named map. Values must be finite integers or floats;
+missing, extra, non-contiguous, non-numeric, and non-finite values are
+rejected. There is no imputation or preprocessing.
+
+For an explicit `binary_probability` model, `predict()` returns `p` and
+`predictProba()` returns `[1 - p, p]` in fixed class order `[0, 1]`:
+
+```php
+$probability = $model->predict([42.0, 80000.0]);
+$distribution = $model->predictProba([42.0, 80000.0]);
+// [$distribution[0], $distribution[1]] === [1 - $probability, $probability]
+```
+
+Value models do not expose guessed class labels and throw `LogicException`
+when `predictProba()` is requested. A fresh `new Score()` remains available
+for the package identity call (`name() === 'score'`) but has no model to
+predict until `Score::load()` is used.
+
+## Exporting a supported linear model
+
+The following is a concise exporter for a fitted binary or single-output
+scikit-learn estimator. It writes the Eloquage-owned schema; it does not make
+pickle, ONNX, sklearn runtime parity, multiclass output, or model loading in
+PHP part of the contract.
+
+```python
+import json
+
+def export_eloquage_score(estimator, feature_names, path, *, probability=False):
+    coefficients = estimator.coef_
+    if coefficients.ndim != 2 or coefficients.shape[0] != 1:
+        raise ValueError("only one binary/single-output coefficient row is supported")
+
+    document = {
+        "format": "eloquage-score",
+        "version": 1,
+        "type": "linear",
+        "features": list(feature_names),
+        "output": "binary_probability" if probability else "value",
+        "weights": coefficients[0].tolist(),
+        "bias": float(estimator.intercept_[0]),
+        "activation": "sigmoid" if probability else "identity",
+    }
+
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(document, handle, allow_nan=False, indent=2)
 ```
 
 ## Testing
 
 ```bash
 composer test
+vendor/bin/pest --coverage --min=90
 ```
 
-## Changelog
-
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## Contributing
-
-Please see [CONTRIBUTING](https://github.com/spatie/.github/blob/main/CONTRIBUTING.md) for details.
-
-## Security Vulnerabilities
-
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
-
-## Credits
-
-- [Miguel Enes](https://github.com/eloquage)
-- [All Contributors](../../contributors)
+The package source of truth is pure PHP under `src/`. TypePHP remains an
+optional maintainer experiment; JSON parsing, dynamic validation, and
+recursive trees are intentionally not presented as a proven native build.
+See [AGENTS.md](AGENTS.md) and [TYPEPHP.md](TYPEPHP.md) for the package
+workflow.
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+The MIT License (MIT). See [LICENSE.md](LICENSE.md).
