@@ -3,7 +3,7 @@
 use Eloquage\Score\Score;
 
 it('bootstraps the package entrypoint', function () {
-    $instance = new Score();
+    $instance = new Score;
 
     expect($instance->name())->toBe('score');
 });
