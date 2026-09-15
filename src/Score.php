@@ -13,7 +13,7 @@ final class Score
     /**
      * Keep the no-argument identity entrypoint available for package users.
      *
-     * @param array<string, mixed>|null $model
+     * @param  array<string, mixed>|null  $model
      */
     public function __construct(?array $model = null)
     {
@@ -57,7 +57,7 @@ final class Score
     }
 
     /**
-     * @param array<int|string, int|float> $features
+     * @param  array<int|string, int|float>  $features
      */
     public function predict(array $features): float
     {
@@ -94,7 +94,7 @@ final class Score
     }
 
     /**
-     * @param array<int|string, int|float> $features
+     * @param  array<int|string, int|float>  $features
      * @return list<float>
      */
     public function predictProba(array $features): array
@@ -120,7 +120,6 @@ final class Score
         return $this->model;
     }
 
-    /** @param mixed $document */
     private static function normalizeDocument(mixed $document): array
     {
         if (! is_array($document) || array_is_list($document)) {
@@ -239,8 +238,7 @@ final class Score
     }
 
     /**
-     * @param mixed $node
-     * @param list<string> $features
+     * @param  list<string>  $features
      * @return array<string, mixed>
      */
     private static function normalizeNode(mixed $node, array $features, string $output, int $depth): array
@@ -290,8 +288,8 @@ final class Score
     }
 
     /**
-     * @param array<int|string, int|float> $features
-     * @param list<string> $declaredFeatures
+     * @param  array<int|string, int|float>  $features
+     * @param  list<string>  $declaredFeatures
      * @return list<float>
      */
     private function canonicalizeFeatures(array $features, array $declaredFeatures): array
@@ -330,8 +328,8 @@ final class Score
     }
 
     /**
-     * @param array<string, mixed> $model
-     * @param list<float> $values
+     * @param  array<string, mixed>  $model
+     * @param  list<float>  $values
      */
     private function predictLinear(array $model, array $values): float
     {

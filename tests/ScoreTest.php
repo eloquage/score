@@ -41,7 +41,7 @@ function score_tree_chain(int $internalNodes): array
 }
 
 it('preserves the identity entrypoint for fresh and loaded scores', function () {
-    expect((new Score())->name())->toBe('score')
+    expect((new Score)->name())->toBe('score')
         ->and(Score::load(score_fixture('linear-value.json'))->name())->toBe('score');
 });
 
@@ -71,8 +71,8 @@ it('routes tree equality left and aggregates forest means', function () {
 });
 
 it('rejects prediction before a model is loaded and probability requests for value models', function () {
-    expect(fn () => (new Score())->predict([1]))->toThrow(LogicException::class)
-        ->and(fn () => (new Score())->predictProba([1]))->toThrow(LogicException::class)
+    expect(fn () => (new Score)->predict([1]))->toThrow(LogicException::class)
+        ->and(fn () => (new Score)->predictProba([1]))->toThrow(LogicException::class)
         ->and(fn () => Score::load(score_fixture('linear-value.json'))->predictProba([1, 2]))
         ->toThrow(LogicException::class);
 });
