@@ -1,5 +1,8 @@
 # eloquage/score
 
+<p align="center"><img src="art/banner.png" alt="score package banner" width="100%"></p>
+
+
 Local, inference-only scoring for small exported linear models and bounded
 binary trees/forests. The package is framework-agnostic and runs from pure
 PHP without Python, ONNX, pickle, HTTP, or a model runtime.
